@@ -30,13 +30,16 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Textarea } from "@/components/ui/textarea";
 import { CategoriesSheet } from "@/components/custom";
+import { useState } from "react";
+import axios from "axios";
+import { useToast } from "@/components/ui/use-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
 type Transaction = z.infer<typeof createTransactionSchema>;
 
 const initialTransation: Transaction = {
-  amount: 0,
+  amount: "0",
   category: "",
   note: "",
   type: "outcome",
@@ -45,6 +48,8 @@ const initialTransation: Transaction = {
 
 export default function Home() {
   const { data: session } = useSession();
+  const toast = useToast()
+  const [loading, setLoading] = useState(false);
   const form = useForm<Transaction>({
     defaultValues: initialTransation,
     resolver: zodResolver(createTransactionSchema),
@@ -56,7 +61,26 @@ export default function Home() {
   };
 
   const handleSubmit = async (data: Transaction) => {
-    console.log(data);
+    try {
+      setLoading(true);
+      const res = await axios.post("/api/google/create-transaction", data)
+
+      console.log(res);
+      toast?.toast({
+        type: "foreground",
+        title: "Success",
+        description: "Transaction created successfully",
+      })
+    } catch (error: any) {
+      console.error(error);
+      toast?.toast({
+        type: "foreground",
+        title: "Error",
+        description: error?.message ||  "Something went wrong",
+      })
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

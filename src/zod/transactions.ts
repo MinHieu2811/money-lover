@@ -5,7 +5,7 @@ export const createTransactionSchema = z.object({
   category: z.string().min(2, {
     message: 'Category must be at least 2 characters long',
   }),
-  amount: z.number().min(1, {
+  amount: z.string().min(1, {
     message: 'Amount must be at least 1,000 VND',
   }),
   date: z.date({

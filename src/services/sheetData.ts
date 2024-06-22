@@ -29,10 +29,14 @@ export const updateSheetData = async (
   const auth = new google.auth.OAuth2();
   auth.setCredentials({ access_token: session?.accessToken });
 
+  if(!spreadsheetId) {
+    spreadsheetId = process.env.SPREADSHEET_ID || "";
+  }
+
   const sheets = google?.sheets({ version: "v4", auth });
 
   await sheets?.spreadsheets?.values.update({
-    spreadsheetId,
+    spreadsheetId: spreadsheetId || process.env.SPREADSHEET_ID,
     range: "Sheet1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
