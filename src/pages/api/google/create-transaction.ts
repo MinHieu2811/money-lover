@@ -66,7 +66,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const transactionType = (key as "income") || "income";
 
     if (!date || !category || !amount) {
-      return res.status(400).json({ error: "Missing required fields" });
+      res?.status(400)
+      throw new Error("Missing required fields");
     }
     const spreadsheetId = process.env.SPREADSHEET_ID;
     const response = await addTransaction(
@@ -80,7 +81,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).json(response);
   } catch (error) {
     console.error("Error adding transaction:", error);
-    res.status(500).json({ error: "Failed to add transaction" });
+    res.status(500)
+    throw new Error("Failed to add transaction");
   }
 };
 
