@@ -13,18 +13,18 @@ export const authOptions = {
   jwt: {
     maxAge: 24 * 60 * 60, // 24h
   },
-  callbacks: {
-    async jwt({ token, account }: any) {
-      if (account) {
-        token.accessToken = account?.access_token || '';
-      }
-      return token;
-    },
-    async session({ session, token }: any) {
-      session.accessToken = token?.accessToken || '';
-      return session;
-    },
-  },
+  // callbacks: {
+  //   async jwt({ token, account }: any) {
+  //     if (account) {
+  //       token.accessToken = account?.access_token || '';
+  //     }
+  //     return token;
+  //   },
+  //   async session({ session, token }: any) {
+  //     session.accessToken = token?.accessToken || '';
+  //     return session;
+  //   },
+  // },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
