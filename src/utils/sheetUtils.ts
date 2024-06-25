@@ -6,6 +6,7 @@ type CreateNewTransactionRowProps = {
   category: string;
   amount: string;
   type?: TransactionType;
+  note?: string;
 };
 
 export type TransactionType = "income" | "outcome" | "debt";
@@ -29,11 +30,18 @@ export const createNewTransactionRow = ({
   category,
   amount,
   type,
+  note
 }: CreateNewTransactionRowProps) => {
-  const newRow = Array(headerRow?.length).fill("");
-  newRow[0] = uuidv4()
-  newRow[0] = date;
-  newRow[1] = type || "";
+  const newRow = Array(headerRow.length).fill('');
+  newRow[0] = uuidv4(); // Generate a unique ID
+  newRow[1] = date;
+  newRow[2] = category;
+  newRow[3] = amount;
+  newRow[4] = note;
+  if (type) {
+    newRow[5] = type;
+  }
+
   const categoryColumnIndex = getCategoryColumnIndex(headerRow, category);
   newRow[categoryColumnIndex || 0] = amount;
   return newRow;
@@ -46,7 +54,6 @@ export const getSummaryRowIndex = (rows: string[][]): number => {
 export const updateSummaryRow = (
   rows: string[][],
   headerRow: string[],
-  date: string,
   category: string,
   amount: string,
   type: TransactionType

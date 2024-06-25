@@ -2,9 +2,7 @@ import { z } from 'zod'
 
 export const createTransactionSchema = z.object({
   type: z.enum(['income', 'outcome', 'debt']),
-  category: z.string().min(2, {
-    message: 'Category must be at least 2 characters long',
-  }),
+  category: z.string().nonempty(),
   amount: z.string().min(1, {
     message: 'Amount must be at least 1,000 VND',
   }),

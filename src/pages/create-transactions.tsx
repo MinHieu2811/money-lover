@@ -48,11 +48,12 @@ const initialTransation: Transaction = {
 
 export default function Home() {
   const { data: session } = useSession();
-  const toast = useToast()
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const form = useForm<Transaction>({
     defaultValues: initialTransation,
     resolver: zodResolver(createTransactionSchema),
+    mode: "onSubmit",
   });
   const categories = form?.watch("category");
 
@@ -62,22 +63,29 @@ export default function Home() {
 
   const handleSubmit = async (data: Transaction) => {
     try {
+      if (data?.amount === "0") {
+        form.setError("amount", {
+          type: "custom",
+          message: "Amount is required",
+        });
+        return;
+      }
       setLoading(true);
-      const res = await axios.post("/api/google/create-transaction", data)
+      const res = await axios.post("/api/google/create-transaction", data);
 
       console.log(res);
       toast?.toast({
         type: "foreground",
         title: "Success",
         description: "Transaction created successfully",
-      })
+      });
     } catch (error: any) {
       console.error(error);
       toast?.toast({
         type: "foreground",
         title: "Error",
-        description: error?.message ||  "Something went wrong",
-      })
+        description: error?.message || "Something went wrong",
+      });
     } finally {
       setLoading(false);
     }
@@ -92,7 +100,10 @@ export default function Home() {
           name={session?.user?.name || ""}
         />
         <Form {...form}>
-          <form className="px-2 py-0 mt-2" onSubmit={form.handleSubmit(handleSubmit)}>
+          <form
+            className="px-2 py-0 mt-2"
+            onSubmit={form.handleSubmit(handleSubmit)}
+          >
             <FormField
               control={form?.control}
               name="amount"
@@ -101,7 +112,7 @@ export default function Home() {
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
                     <div className="flex">
-                      <Button className="mr-2">
+                      <Button className="mr-2" type="button">
                         <Image
                           src="/dong.png"
                           alt="currency"
