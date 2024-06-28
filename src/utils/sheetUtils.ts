@@ -54,27 +54,30 @@ export const getSummaryRowIndex = (rows: string[][]): number => {
 export const updateSummaryRow = (
   rows: string[][],
   headerRow: string[],
-  category: string,
-  amount: string,
-  type: TransactionType
+  date: string
 ): void => {
   let summaryRowIndex = getSummaryRowIndex(rows);
   if (summaryRowIndex === -1) {
-    const newRow = createNewTransactionRow({
-      headerRow,
-      date: `Summary`,
-      category,
-      amount,
-    });
+    const newRow = Array(headerRow.length + 1).fill(''); // +1 for total column
+    newRow[0] = ''; // ID column is empty
+    newRow[1] = date;
+    newRow[headerRow.length] = 'Summary';
     rows.push(newRow);
-    return
+    summaryRowIndex = rows.length - 1;
   }
-  const categoryColumnIndex = getCategoryColumnIndex(headerRow, category);
-  const currentAmount = parseFloat(rows[summaryRowIndex || 0][categoryColumnIndex || 0]) || 0;
 
-  if (type === 'income') {
-    rows[summaryRowIndex || 0][categoryColumnIndex || 0] = (currentAmount + parseFloat(amount)).toString();
-  } else if (type === 'outcome') {
-    rows[summaryRowIndex || 0][categoryColumnIndex || 0] = (currentAmount - parseFloat(amount)).toString();
-  }
+  const summaryRow = rows[summaryRowIndex];
+  let totalIncome = 0;
+  let totalOutcome = 0;
+
+  rows.forEach(row => {
+    if (row[1] !== 'Summary' && row[2] === 'income') {
+      totalIncome += parseFloat(row[3]);
+    } else if (row[1] !== 'Summary' && row[2] === 'outcome') {
+      totalOutcome += parseFloat(row[3]);
+    }
+  });
+
+  const total = totalIncome - totalOutcome;
+  summaryRow[headerRow.length] = total.toString();
 };

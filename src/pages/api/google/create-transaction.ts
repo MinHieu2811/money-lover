@@ -1,6 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { fetchSheetData, updateSheetData } from "@/services/sheetData";
-import { createNewTransactionRow, getSummaryRowIndex, updateSummaryRow } from "@/utils/sheetUtils";
+import {
+  fetchSheetData,
+  insertRowAndAddTransaction,
+  updateSheetData,
+} from "@/services/sheetData";
+import {
+  createNewTransactionRow,
+  getSummaryRowIndex,
+  updateSummaryRow,
+} from "@/utils/sheetUtils";
 import { config_data } from "@/config-data";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
@@ -14,55 +22,42 @@ type Session = {
 type TransactionType = "income" | "outcome" | "debt";
 
 const addTransaction = async ({
-  session,
   spreadsheetId,
   date,
   category,
   amount,
   type,
-  note
+  note,
 }: {
   spreadsheetId: string;
   date: string;
   category: string;
   amount: string;
-  session: Session;
   type: TransactionType;
-  note?: string;
+  note: string;
 }) => {
-  let rows = await fetchSheetData(spreadsheetId, session);
+  // Fetch existing sheet data
+  let rows = await fetchSheetData(spreadsheetId);
 
   if (rows.length === 0) {
-    rows.push(["ID", "Date", "Category", "Amount", "Note", "Type"]);
+    // Initialize header row if it doesn't exist
+    rows.push(["ID", "Date", "Type", "Amount", "Note"]);
   }
 
   const headerRow = rows[0];
 
+  // Create new transaction row
   const newRow = createNewTransactionRow({
     headerRow,
     date,
     category,
     amount,
     type,
-    note: note || "",
+    note,
   });
-  rows.push(newRow);
 
-  if (type === "income" || type === "outcome") {
-    updateSummaryRow(rows, headerRow, category, amount, type);
-  }
-
-  const summaryRowIndex = getSummaryRowIndex(rows);
-
-  if (summaryRowIndex === -1) {
-    // If no summary row exists, add the new transaction normally
-    rows.push(newRow);
-  } else {
-    // Insert the new transaction above the summary row
-    rows.splice(summaryRowIndex, 0, newRow);
-  }
-
-  await updateSheetData(spreadsheetId, rows, session);
+  // Insert the new row and add the transaction
+  await insertRowAndAddTransaction(spreadsheetId, newRow);
 
   return { message: "Transaction added successfully" };
 };
@@ -104,7 +99,6 @@ export default async function handler(
       date: format(date, "dd/MMMM/yyyy HH:mm"),
       category,
       amount,
-      session,
       note,
       type: transactionType,
     });

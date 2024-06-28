@@ -1,3 +1,4 @@
+import { getSummaryRowIndex, updateSummaryRow } from "@/utils/sheetUtils";
 import { google } from "googleapis";
 
 type Session = {
@@ -6,20 +7,19 @@ type Session = {
 
 export const fetchSheetData = async (
   spreadsheetId: string,
-  session: Session
 ): Promise<string[][]> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.CLIENT_EMAIL,
       client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, '\n')
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
     },
     scopes: [
-      'https://www.googleapis.com/auth/drive',
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/spreadsheets'
-    ]
-  })
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
   // auth.setCredentials({ access_token: session?.accessToken });
 
   const sheets = google?.sheets({ version: "v4", auth });
@@ -41,16 +41,16 @@ export const updateSheetData = async (
     credentials: {
       client_email: process.env.CLIENT_EMAIL,
       client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, '\n')
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
     },
     scopes: [
-      'https://www.googleapis.com/auth/drive',
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/spreadsheets'
-    ]
-  })
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
 
-  if(!spreadsheetId) {
+  if (!spreadsheetId) {
     spreadsheetId = process.env.SPREADSHEET_ID || "";
   }
 
@@ -64,4 +64,88 @@ export const updateSheetData = async (
       values: rows,
     },
   });
+};
+
+export const insertRowAndAddTransaction = async (
+  spreadsheetId: string,
+  newRow: string[],
+): Promise<void> => {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.CLIENT_EMAIL,
+      client_id: process.env.CLIENT_ID,
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+    },
+    scopes: [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  // Get the existing sheet data
+  const getResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "Sheet1",
+  });
+
+  const rows = getResponse.data.values || [];
+  const summaryRowIndex = getSummaryRowIndex(rows);
+
+  if (summaryRowIndex === -1) {
+    // Append a new row if summary row doesn't exist
+    rows.push(newRow);
+    updateSummaryRow(rows, rows[0], newRow[1]);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "Sheet1",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: rows,
+      },
+    });
+  } else {
+    // Insert a new row above the summary row
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            insertDimension: {
+              range: {
+                sheetId: 0, // Assuming the first sheet
+                dimension: "ROWS",
+                startIndex: summaryRowIndex,
+                endIndex: summaryRowIndex + 1,
+              },
+              inheritFromBefore: false,
+            },
+          },
+        ],
+      },
+    });
+
+    // Update the new row with the transaction data
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Sheet1!A${summaryRowIndex + 1}:Z${summaryRowIndex + 1}`, // Assuming columns go up to Z
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [newRow],
+      },
+    });
+
+    // Update the summary row
+    updateSummaryRow(rows, rows[0], newRow[1]);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Sheet1!A${summaryRowIndex + 1}:Z${summaryRowIndex + 1}`, // Assuming columns go up to Z
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [rows[summaryRowIndex]],
+      },
+    });
+  }
 };
