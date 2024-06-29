@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import type { AppProps } from "next/app";
 import { Toaster } from "react-hot-toast";
 import Head from "next/head";
+import { ThemeProvider } from "@/components/custom/ThemeProvider";
 
 export default function App({
   Component,
@@ -18,7 +19,14 @@ export default function App({
         <link rel="icon" href="/salary.png" />
       </Head>
       <AuthenWrapper>
-        <Component {...pageProps} />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Component {...pageProps} />
+        </ThemeProvider>
       </AuthenWrapper>
       <Toaster />
     </SessionProvider>

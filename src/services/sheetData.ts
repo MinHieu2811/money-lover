@@ -173,14 +173,38 @@ const getTotalRows = async (spreadsheetId: string): Promise<number> => {
     includeGridData: false,
   });
 
-  console.log(response);
-
   const sheet = response.data.sheets?.[0];
+
+  console.log(sheet);
   if (!sheet) {
     throw new Error('Sheet not found');
   }
 
   return sheet.properties?.gridProperties?.rowCount || 0;
+};
+
+const getTotalRowsWithData = async (spreadsheetId: string): Promise<number> => {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.CLIENT_EMAIL,
+      client_id: process.env.CLIENT_ID,
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+    },
+    scopes: [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
+
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'Sheet1!C:C', // Fetching the category column to determine the number of rows with data
+  });
+
+  return response.data.values?.length || 0;
 };
 
 export const fetchLastNRows = async (
@@ -202,8 +226,8 @@ export const fetchLastNRows = async (
 
   const sheets = google.sheets({ version: "v4", auth });
 
-  const totalRows = await getTotalRows(spreadsheetId);
-  const startRow = Math.max(totalRows - rowCount, 0);
+  const totalRows = await getTotalRowsWithData(spreadsheetId);
+  const startRow = rowCount > totalRows ? 0 : Math.max(totalRows - rowCount, 0);
 
   const getResponse = await sheets.spreadsheets.values.get({
     spreadsheetId,
