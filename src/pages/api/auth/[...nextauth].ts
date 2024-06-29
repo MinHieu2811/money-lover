@@ -40,9 +40,6 @@ export const authOptions = {
       session: any;
       token: any;
     }) {
-      console.log("session", session);
-      console.log("token", token);
-
       session.accessToken = token?.accessToken;
       session.user.id = token?.sub;
 

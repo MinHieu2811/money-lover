@@ -138,14 +138,77 @@ export const insertRowAndAddTransaction = async (
     });
 
     // Update the summary row
-    updateSummaryRow(rows, rows[0], newRow[1]);
+    updateSummaryRow([...(rows || []), newRow], rows[0], newRow[1]);
+
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `Sheet1!A${summaryRowIndex + 1}:Z${summaryRowIndex + 1}`, // Assuming columns go up to Z
+      range: `Sheet1!A${summaryRowIndex + 2}:Z${summaryRowIndex + 2}`, // Assuming columns go up to Z
       valueInputOption: "USER_ENTERED",
       requestBody: {
-        values: [rows[summaryRowIndex]],
+        values: [rows[rows.length - 1]],
       },
     });
   }
+};
+
+const getTotalRows = async (spreadsheetId: string): Promise<number> => {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.CLIENT_EMAIL,
+      client_id: process.env.CLIENT_ID,
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+    },
+    scopes: [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId,
+    ranges: [],
+    includeGridData: false,
+  });
+
+  console.log(response);
+
+  const sheet = response.data.sheets?.[0];
+  if (!sheet) {
+    throw new Error('Sheet not found');
+  }
+
+  return sheet.properties?.gridProperties?.rowCount || 0;
+};
+
+export const fetchLastNRows = async (
+  spreadsheetId: string,
+  rowCount: number
+): Promise<string[][]> => {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.CLIENT_EMAIL,
+      client_id: process.env.CLIENT_ID,
+      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+    },
+    scopes: [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/spreadsheets",
+    ],
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const totalRows = await getTotalRows(spreadsheetId);
+  const startRow = Math.max(totalRows - rowCount, 0);
+
+  const getResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `Sheet1!A${startRow + 1}:Z${totalRows}`,
+  });
+
+  return getResponse.data.values || [];
 };

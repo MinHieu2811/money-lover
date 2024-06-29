@@ -41,7 +41,16 @@ export const StickyHeader = ({ imgAva, name, email }: StickyHeaderProps) => {
             </div>
           </SheetHeader>
           <div className="border-b">
-            <Link href="/create-transactions" className="flex items-center py-3 px-2">
+            <Link href="/" className="flex items-center py-3 px-2">
+              <Image src="/home.png" alt="home icon" width={20} height={20} />
+              <span className="ml-2">Home</span>
+            </Link>
+          </div>
+          <div className="border-b">
+            <Link
+              href="/create-transactions"
+              className="flex items-center py-3 px-2"
+            >
               <Image src="/tab.png" alt="tab" width={20} height={20} />
               <span className="ml-2">Create Transactions</span>
             </Link>

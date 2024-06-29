@@ -48,7 +48,7 @@ export const createNewTransactionRow = ({
 };
 
 export const getSummaryRowIndex = (rows: string[][]): number => {
-  return rows.findIndex((row) => row[0] === `Summary`);
+  return rows.findIndex((row) => row[2] === `Summary`);
 };
 
 export const updateSummaryRow = (
@@ -58,26 +58,25 @@ export const updateSummaryRow = (
 ): void => {
   let summaryRowIndex = getSummaryRowIndex(rows);
   if (summaryRowIndex === -1) {
-    const newRow = Array(headerRow.length + 1).fill(''); // +1 for total column
+    const newRow = Array(headerRow?.length + 1).fill(''); // +1 for total column
     newRow[0] = ''; // ID column is empty
     newRow[1] = date;
-    newRow[headerRow.length] = 'Summary';
+    newRow[2] = 'Summary';
     rows.push(newRow);
     summaryRowIndex = rows.length - 1;
   }
 
-  const summaryRow = rows[summaryRowIndex];
   let totalIncome = 0;
   let totalOutcome = 0;
 
   rows.forEach(row => {
-    if (row[1] !== 'Summary' && row[2] === 'income') {
+    if (row[2] !== 'Summary' && row[5] === 'income') {
       totalIncome += parseFloat(row[3]);
-    } else if (row[1] !== 'Summary' && row[2] === 'outcome') {
+    } else if (row[2] !== 'Summary' && row[5] === 'outcome') {
       totalOutcome += parseFloat(row[3]);
     }
   });
 
   const total = totalIncome - totalOutcome;
-  summaryRow[headerRow.length] = total.toString();
+  rows[summaryRowIndex][headerRow?.length] = total.toString();
 };

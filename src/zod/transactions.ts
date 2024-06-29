@@ -10,7 +10,5 @@ export const createTransactionSchema = z.object({
     required_error: 'Date is required',
     message: 'Invalid date',
   }),
-  note: z.string().min(2, {
-    message: 'Note must be at least 2 characters long',
-  }),
+  note: z.string()
 })

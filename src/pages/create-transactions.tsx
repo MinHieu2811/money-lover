@@ -33,6 +33,7 @@ import { CategoriesSheet } from "@/components/custom";
 import { useState } from "react";
 import axios from "axios";
 import { useToast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,7 +49,6 @@ const initialTransation: Transaction = {
 
 export default function Home() {
   const { data: session } = useSession();
-  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const form = useForm<Transaction>({
     defaultValues: initialTransation,
@@ -62,6 +62,7 @@ export default function Home() {
   };
 
   const handleSubmit = async (data: Transaction) => {
+    const toastId = toast.loading("Loading...");
     try {
       if (data?.amount === "0") {
         form.setError("amount", {
@@ -71,20 +72,15 @@ export default function Home() {
         return;
       }
       setLoading(true);
-      const res = await axios.post("/api/google/create-transaction", data);
-
-      console.log(res);
-      toast?.toast({
-        type: "foreground",
-        title: "Success",
-        description: "Transaction created successfully",
+      await axios.post("/api/google/create-transaction", data);
+      form.reset();
+      toast.success("Transaction created successfully", {
+        id: toastId,
       });
     } catch (error: any) {
       console.error(error);
-      toast?.toast({
-        type: "foreground",
-        title: "Error",
-        description: error?.message || "Something went wrong",
+      toast?.error(error?.message || "Something went wrong", {
+        id: toastId,
       });
     } finally {
       setLoading(false);
@@ -105,6 +101,7 @@ export default function Home() {
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FormField
+              disabled={loading}
               control={form?.control}
               name="amount"
               render={({ field }) => (
@@ -129,6 +126,7 @@ export default function Home() {
               )}
             />
             <FormField
+              disabled={loading}
               control={form?.control}
               name="date"
               render={({ field }) => (
@@ -138,6 +136,7 @@ export default function Home() {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          disabled={loading}
                           variant={"outline"}
                           className={cn(
                             "w-full pl-3 text-left font-normal",
@@ -186,7 +185,12 @@ export default function Home() {
               />
             )}
             <SheetTrigger className="w-full mb-3">
-              <Button type="button" variant="outline" className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+              >
                 <Image
                   src="/categories.png"
                   alt="Categories"
@@ -198,6 +202,7 @@ export default function Home() {
             </SheetTrigger>
 
             <FormField
+              disabled={loading}
               control={form?.control}
               name="note"
               render={({ field }) => (
@@ -210,7 +215,12 @@ export default function Home() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" variant="default">
+            <Button
+              type="submit"
+              className="w-full"
+              variant="default"
+              disabled={loading}
+            >
               Submit
             </Button>
           </form>

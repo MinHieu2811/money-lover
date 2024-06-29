@@ -1,8 +1,8 @@
 import { AuthenWrapper } from "@/components/custom";
-import { Toaster } from "@/components/ui/toaster";
 import "@/styles/globals.css";
 import { SessionProvider } from "next-auth/react";
 import type { AppProps } from "next/app";
+import { Toaster } from "react-hot-toast";
 import Head from "next/head";
 
 export default function App({
