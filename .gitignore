@@ -12,6 +12,9 @@
 # next.js
 /.next/
 /out/
+/.env
+/client_secret_511463988358-l6vnr0opb93bmumbb4a2shs2ctsmfo26.apps.googleusercontent.com.json
+/money-lover-426916-28707abb00c6.json
 
 # production
 /build
