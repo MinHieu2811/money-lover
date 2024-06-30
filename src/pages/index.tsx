@@ -93,7 +93,7 @@ export default function IndexPage({
               href="/create-transactions"
               className="flex items-center py-3 px-2"
             >
-              <PlusSquare width={16} height={16} color="white"/>
+              <PlusSquare width={16} height={16} />
               <span className="ml-2">Create New Transaction</span>
             </Link>
           </Button>
@@ -113,9 +113,7 @@ export default function IndexPage({
                 {transactions?.map((transaction: Transaction) => (
                   <TableRow
                     key={transaction?.id}
-                    className={`hover:bg-gray-100 ${
-                      transaction?.date === "Summary" ? "bg-gray-200" : ""
-                    }`}
+                    className={`hover:bg-gray-100`}
                   >
                     <TableCell className="font-medium px-2">
                       {transaction?.date}
