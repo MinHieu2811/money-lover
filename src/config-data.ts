@@ -29,3 +29,12 @@ export const config_data = {
     debt: ["Debt Collection", "Borrowing", "Lending", "Debt Repayment"],
   },
 };
+
+
+export const mappedDataArray = {
+  id: 0,
+  date: 1,
+  category: 2,
+  amount: 3,
+  note: 4,
+}

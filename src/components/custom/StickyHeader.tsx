@@ -52,7 +52,7 @@ export const StickyHeader = ({ imgAva, name, email }: StickyHeaderProps) => {
               className="flex items-center py-3 px-2"
             >
               <Image src="/tab.png" alt="tab" width={20} height={20} />
-              <span className="ml-2">Create Transactions</span>
+              <span className="ml-2">Create new transactions</span>
             </Link>
           </div>
         </SheetContent>

@@ -3,18 +3,42 @@ import { StickyHeader } from "@/components/custom/StickyHeader";
 import { getServerSession, NextAuthOptions, Session } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]";
 import { useSession } from "next-auth/react";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, PlusSquare } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { mappedDataArray } from "@/config-data";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Link from "next/link";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
+
+type Transaction = {
+  id: string;
+  category: string;
+  amount: string;
+  date: string;
+  note: string;
+};
 
 type Props = {
   session: Session | null;
   summaryAmount: number;
-  transactions: string[][];
+  transactions: Transaction[];
 };
 
 export default function IndexPage({
@@ -23,6 +47,7 @@ export default function IndexPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data: session } = useSession();
   const [hide, setHide] = useState(false);
+  console.log(transactions);
   return (
     <main className={`min-h-screen ${inter.className}`}>
       <StickyHeader
@@ -62,6 +87,51 @@ export default function IndexPage({
           </CardTitle>
           <CardDescription>Your total balance</CardDescription>
         </Card>
+        <div className="mt-2 mb-2 flex items-center justify-end">
+          <Button variant="default">
+            <Link
+              href="/create-transactions"
+              className="flex items-center py-3 px-2"
+            >
+              <PlusSquare width={16} height={16} color="white"/>
+              <span className="ml-2">Create New Transaction</span>
+            </Link>
+          </Button>
+        </div>
+        <Card className="px-2 py-2 mt-3">
+          <CardTitle className="text-xl mb-2">Recent Transactions</CardTitle>
+          <CardContent className="px-1">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions?.map((transaction: Transaction) => (
+                  <TableRow
+                    key={transaction?.id}
+                    className={`hover:bg-gray-100 ${
+                      transaction?.date === "Summary" ? "bg-gray-200" : ""
+                    }`}
+                  >
+                    <TableCell className="font-medium px-2">
+                      {transaction?.date}
+                    </TableCell>
+                    <TableCell className="px-2">
+                      {transaction?.category}
+                    </TableCell>
+                    <TableCell className="text-right px-2">
+                      {Number(transaction?.amount)?.toLocaleString()} VND
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
@@ -95,11 +165,45 @@ export const getServerSideProps = (async (context) => {
       },
     });
     const { summaryAmount, rows: transactions } = await res.json();
+
+    const mappedTransactions: Transaction[] = (transactions || [])
+      ?.map((transaction: string[]) => ({
+        id: transaction[mappedDataArray?.id]
+          ? transaction[mappedDataArray?.id]
+          : "",
+        category: transaction[mappedDataArray?.category]
+          ? transaction[mappedDataArray?.category]
+          : "",
+        amount: transaction[mappedDataArray?.amount]
+          ? transaction[mappedDataArray?.amount]
+          : "",
+        date: transaction[mappedDataArray?.date]
+          ? transaction[mappedDataArray?.date]
+          : "",
+        note: transaction[mappedDataArray?.note]
+          ? transaction[mappedDataArray?.note]
+          : "",
+      }))
+      ?.filter(
+        (transaction: Transaction) =>
+          transaction?.category?.toLocaleLowerCase() !== "summary"
+      );
+
+    const addTotalRes: Transaction[] = [
+      ...(mappedTransactions || []),
+      {
+        id: "" + Math.random(),
+        category: "",
+        amount: summaryAmount,
+        date: "Summary",
+        note: "",
+      },
+    ];
     return {
       props: {
         session,
-        summaryAmount: summaryAmount || 0,
-        transactions: transactions || [],
+        summaryAmount: Number(summaryAmount) || 0,
+        transactions: addTotalRes || [],
       },
     };
   } catch (error) {
