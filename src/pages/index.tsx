@@ -187,7 +187,11 @@ export const getServerSideProps = (async (context) => {
       ?.filter(
         (transaction: Transaction) =>
           transaction?.category?.toLocaleLowerCase() !== "summary"
-      );
+      )?.sort((a: Transaction, b: Transaction) => {
+        const dateA = new Date(a?.date);
+        const dateB = new Date(b?.date);
+        return dateB?.getTime() - dateA?.getTime()
+      })
 
     const addTotalRes: Transaction[] = [
       ...(mappedTransactions || []),
