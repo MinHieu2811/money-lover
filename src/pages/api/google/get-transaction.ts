@@ -3,6 +3,7 @@ import { NextAuthOptions, Session } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import { fetchLastNRows } from "@/services/sheetData";
+import getConfig from "next/config";
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,7 +27,7 @@ export default async function handler(
       return;
     }
 
-    const spreadsheetId = process.env.SPREADSHEET_ID;
+    const spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
     if (!spreadsheetId) {
       res.status(500);
       throw new Error("Spreadsheet ID not found");

@@ -14,6 +14,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import { NextAuthOptions } from "next-auth";
 import { format } from "date-fns";
+import getConfig from "next/config";
 
 type Session = {
   accessToken: string;
@@ -93,7 +94,7 @@ export default async function handler(
       res?.status(400);
       throw new Error("Missing required fields");
     }
-    const spreadsheetId = process.env.SPREADSHEET_ID;
+    const spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
     const response = await addTransaction({
       spreadsheetId: spreadsheetId || "",
       date: format(date, "dd/MMMM/yyyy HH:mm"),

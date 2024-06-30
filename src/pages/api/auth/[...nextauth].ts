@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import getConfig from "next/config";
 import { v4 as uuidv4 } from "uuid";
 
 declare module "next-auth" {
@@ -9,7 +10,7 @@ export const authOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getConfig().serverRuntimeConfig.nextAuthSecret || '',
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24h
@@ -48,8 +49,8 @@ export const authOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: getConfig().serverRuntimeConfig.googleClientId || "",
+      clientSecret: getConfig().serverRuntimeConfig.googleClientSecret || "",
       authorization: {
         params: {
           scope: "openid email profile",

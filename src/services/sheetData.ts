@@ -1,5 +1,6 @@
 import { getSummaryRowIndex, updateSummaryRow } from "@/utils/sheetUtils";
 import { google } from "googleapis";
+import getConfig from "next/config";
 
 type Session = {
   accessToken: string;
@@ -10,9 +11,9 @@ export const fetchSheetData = async (
 ): Promise<string[][]> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -39,9 +40,9 @@ export const updateSheetData = async (
 ): Promise<void> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -51,13 +52,13 @@ export const updateSheetData = async (
   });
 
   if (!spreadsheetId) {
-    spreadsheetId = process.env.SPREADSHEET_ID || "";
+    spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
   }
 
   const sheets = google?.sheets({ version: "v4", auth });
 
   await sheets?.spreadsheets?.values.update({
-    spreadsheetId: spreadsheetId || process.env.SPREADSHEET_ID,
+    spreadsheetId: spreadsheetId || getConfig().serverRuntimeConfig.spreadsheetId || '',
     range: "Sheet1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
@@ -72,9 +73,9 @@ export const insertRowAndAddTransaction = async (
 ): Promise<void> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -154,9 +155,9 @@ export const insertRowAndAddTransaction = async (
 const getTotalRows = async (spreadsheetId: string): Promise<number> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -186,9 +187,9 @@ const getTotalRows = async (spreadsheetId: string): Promise<number> => {
 const getTotalRowsWithData = async (spreadsheetId: string): Promise<number> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -213,9 +214,9 @@ export const fetchLastNRows = async (
 ): Promise<string[][]> => {
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      client_id: process.env.CLIENT_ID,
-      private_key: (process.env.PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      client_email: getConfig().serverRuntimeConfig.clientEmail,
+      client_id: getConfig().serverRuntimeConfig.clientId,
+      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
