@@ -10,7 +10,8 @@ const nextConfig = {
     clientId: process.env.CLIENT_ID || '',
     clientEmail: process.env.CLIENT_EMAIL || '',
     spreadsheetId: process.env.SPREADSHEET_ID || '',
-    spreadsheetConfigId: process.env.SPREADSHEET_USER_CONFIG || ''
+    spreadsheetConfigId: process.env.SPREADSHEET_USER_CONFIG || '',
+    googleServiceAccount: process.env.GOOGLE_SERVICE_ACCOUNT || '',
   },
   publicRuntimeConfig: {
     // Will be available on both server and client

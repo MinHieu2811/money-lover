@@ -7,13 +7,19 @@ type Session = {
 };
 
 export const fetchSheetData = async (
-  spreadsheetId: string,
+  spreadsheetId: string
 ): Promise<string[][]> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -38,11 +44,17 @@ export const updateSheetData = async (
   rows: string[][],
   session: Session
 ): Promise<void> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -52,13 +64,14 @@ export const updateSheetData = async (
   });
 
   if (!spreadsheetId) {
-    spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
+    spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || "";
   }
 
   const sheets = google?.sheets({ version: "v4", auth });
 
   await sheets?.spreadsheets?.values.update({
-    spreadsheetId: spreadsheetId || getConfig().serverRuntimeConfig.spreadsheetId || '',
+    spreadsheetId:
+      spreadsheetId || getConfig().serverRuntimeConfig.spreadsheetId || "",
     range: "Sheet1",
     valueInputOption: "USER_ENTERED",
     requestBody: {
@@ -69,13 +82,19 @@ export const updateSheetData = async (
 
 export const insertRowAndAddTransaction = async (
   spreadsheetId: string,
-  newRow: string[],
+  newRow: string[]
 ): Promise<void> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -153,11 +172,17 @@ export const insertRowAndAddTransaction = async (
 };
 
 const getTotalRows = async (spreadsheetId: string): Promise<number> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -178,18 +203,24 @@ const getTotalRows = async (spreadsheetId: string): Promise<number> => {
 
   console.log(sheet);
   if (!sheet) {
-    throw new Error('Sheet not found');
+    throw new Error("Sheet not found");
   }
 
   return sheet.properties?.gridProperties?.rowCount || 0;
 };
 
 const getTotalRowsWithData = async (spreadsheetId: string): Promise<number> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -198,11 +229,11 @@ const getTotalRowsWithData = async (spreadsheetId: string): Promise<number> => {
     ],
   });
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  const sheets = google.sheets({ version: "v4", auth });
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'Sheet1!C:C', // Fetching the category column to determine the number of rows with data
+    range: "Sheet1!C:C", // Fetching the category column to determine the number of rows with data
   });
 
   return response.data.values?.length || 0;
@@ -212,11 +243,17 @@ export const fetchLastNRows = async (
   spreadsheetId: string,
   rowCount: number
 ): Promise<string[][]> => {
+  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const decodedServiceAccount = Buffer.from(
+    base64EncodedServiceAccount,
+    "base64"
+  ).toString("utf-8");
+  const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: getConfig().serverRuntimeConfig.clientEmail,
-      client_id: getConfig().serverRuntimeConfig.clientId,
-      private_key: (getConfig().serverRuntimeConfig.privateKey || "").replace(/\\n/g, "\n"),
+      client_email: credentials.client_email,
+      client_id: credentials.client_id,
+      private_key: credentials.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -234,10 +271,25 @@ export const fetchLastNRows = async (
     spreadsheetId,
     range: `Sheet1!A${startRow + 1}:Z${totalRows}`,
   });
-  const res = (getResponse.data.values || [])?.some((item) => item[2] == "Summary") ? (getResponse.data.values || []) : [...(getResponse.data.values || []), ["", "", "Summary", "", "", "", (getResponse.data.values || [])?.reduce((acc, curr) => {
-    acc += Number(curr[3]);
-    return acc;
-  }, 0)]];
+  const res = (getResponse.data.values || [])?.some(
+    (item) => item[2] == "Summary"
+  )
+    ? getResponse.data.values || []
+    : [
+        ...(getResponse.data.values || []),
+        [
+          "",
+          "",
+          "Summary",
+          "",
+          "",
+          "",
+          (getResponse.data.values || [])?.reduce((acc, curr) => {
+            acc += Number(curr[3]);
+            return acc;
+          }, 0),
+        ],
+      ];
   console.log(res);
   return res || [];
 };
