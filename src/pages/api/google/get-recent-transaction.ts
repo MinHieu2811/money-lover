@@ -33,11 +33,11 @@ export default async function handler(
       throw new Error("Spreadsheet ID not found");
     }
 
-    const rows = await fetchLastNRows(spreadsheetId, 20);
+    const rows = await fetchLastNRows(spreadsheetId, 10);
     const summaryAmount = rows[rows?.length - 1][6] || 0;
     res.status(200).json({
       summaryAmount,
-      rows: rows?.slice(1, 19),
+      rows: rows,
     });
   } catch (error) {
     console.error("Error:", error);

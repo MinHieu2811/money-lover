@@ -234,6 +234,10 @@ export const fetchLastNRows = async (
     spreadsheetId,
     range: `Sheet1!A${startRow + 1}:Z${totalRows}`,
   });
-
-  return getResponse.data.values || [];
+  const res = (getResponse.data.values || [])?.some((item) => item[2] == "Summary") ? (getResponse.data.values || []) : [...(getResponse.data.values || []), ["", "", "Summary", "", "", "", (getResponse.data.values || [])?.reduce((acc, curr) => {
+    acc += Number(curr[3]);
+    return acc;
+  }, 0)]];
+  console.log(res);
+  return res || [];
 };

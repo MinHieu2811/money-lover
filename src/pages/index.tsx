@@ -18,12 +18,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -47,7 +47,7 @@ export default function IndexPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data: session } = useSession();
   const [hide, setHide] = useState(false);
-  console.log(transactions);
+  console.log(transactions?.[transactions?.length - 1]);
   return (
     <main className={`min-h-screen ${inter.className}`}>
       <StickyHeader
@@ -60,15 +60,11 @@ export default function IndexPage({
           <CardTitle className="flex items-center">
             <span
               className={`${
-                !hide
-                  ? Number(summaryAmount) > 0
-                    ? "text-green-500"
-                    : "text-red-500"
-                  : ""
+                !hide ? (summaryAmount ? "text-green-500" : "text-red-500") : ""
               }`}
             >
               {hide ? (
-                <>*********</>
+                <>********* VND</>
               ) : (
                 <>{Number(summaryAmount)?.toLocaleString()} VND</>
               )}
@@ -110,11 +106,8 @@ export default function IndexPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions?.map((transaction: Transaction) => (
-                  <TableRow
-                    key={transaction?.id}
-                    className={`hover:bg-gray-100`}
-                  >
+                {transactions?.slice(0, -1)?.map((transaction: Transaction) => (
+                  <TableRow key={transaction?.id} className="">
                     <TableCell className="font-medium px-2">
                       {transaction?.date}
                     </TableCell>
@@ -127,6 +120,20 @@ export default function IndexPage({
                   </TableRow>
                 ))}
               </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell>{transactions?.slice(-1)?.[0]?.date}</TableCell>
+                  <TableCell>
+                    {transactions?.[transactions?.length - 1]?.category}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {Number(
+                      transactions?.[transactions?.length - 1]?.amount
+                    )?.toLocaleString()}
+                    VND
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           </CardContent>
         </Card>
@@ -156,7 +163,7 @@ export const getServerSideProps = (async (context) => {
         ? "http://localhost:3000"
         : "https://money-lover-omega.vercel.app";
 
-    const res = await fetch(`${baseURL}/api/google/get-transaction`, {
+    const res = await fetch(`${baseURL}/api/google/get-recent-transaction`, {
       method: "GET",
       headers: {
         Cookie: context.req.headers.cookie || "",
@@ -185,11 +192,12 @@ export const getServerSideProps = (async (context) => {
       ?.filter(
         (transaction: Transaction) =>
           transaction?.category?.toLocaleLowerCase() !== "summary"
-      )?.sort((a: Transaction, b: Transaction) => {
+      )
+      ?.sort((a: Transaction, b: Transaction) => {
         const dateA = new Date(a?.date);
         const dateB = new Date(b?.date);
-        return dateB?.getTime() - dateA?.getTime()
-      })
+        return dateB?.getTime() - dateA?.getTime();
+      });
 
     const addTotalRes: Transaction[] = [
       ...(mappedTransactions || []),
@@ -204,7 +212,7 @@ export const getServerSideProps = (async (context) => {
     return {
       props: {
         session,
-        summaryAmount: Number(summaryAmount) || 0,
+        summaryAmount: Number(summaryAmount),
         transactions: addTotalRes || [],
       },
     };
