@@ -97,7 +97,7 @@ export default async function handler(
     const spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
     const response = await addTransaction({
       spreadsheetId: spreadsheetId || "",
-      date: format(date, "dd/MMMM/yyyy HH:mm"),
+      date: format(date, "dd/MMMM/yyyy"),
       category,
       amount,
       note,

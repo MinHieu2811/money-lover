@@ -18,12 +18,13 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { ShowBalance } from "@/components/custom/ShowBalance";
+import SpentChartSection from "@/components/custom/SpentChart";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,21 +34,27 @@ type Transaction = {
   amount: string;
   date: string;
   note: string;
+  type?: "income" | "outcome";
+};
+
+type PlainObject = {
+  [key: string]: any;
 };
 
 type Props = {
   session: Session | null;
   summaryAmount: number;
   transactions: Transaction[];
+  dataChart: PlainObject;
 };
+
 
 export default function IndexPage({
   summaryAmount,
   transactions,
+  dataChart,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data: session } = useSession();
-  const [hide, setHide] = useState(false);
-  console.log(transactions?.[transactions?.length - 1]);
   return (
     <main className={`min-h-screen ${inter.className}`}>
       <StickyHeader
@@ -56,33 +63,7 @@ export default function IndexPage({
         name={session?.user?.name || ""}
       />
       <div className="py-2 px-2">
-        <Card className="px-2 py-2">
-          <CardTitle className="flex items-center">
-            <span
-              className={`${
-                !hide ? (summaryAmount ? "text-green-500" : "text-red-500") : ""
-              }`}
-            >
-              {hide ? (
-                <>********* VND</>
-              ) : (
-                <>{Number(summaryAmount)?.toLocaleString()} VND</>
-              )}
-            </span>
-            <Button
-              className="px-2"
-              onClick={() => setHide(!hide)}
-              variant="link"
-            >
-              {hide ? (
-                <EyeIcon width={16} height={16} />
-              ) : (
-                <EyeOffIcon width={16} height={16} />
-              )}
-            </Button>
-          </CardTitle>
-          <CardDescription>Your total balance</CardDescription>
-        </Card>
+        <ShowBalance summaryAmount={summaryAmount} />
         <div className="mt-2 mb-2 flex items-center justify-end">
           <Button variant="default">
             <Link
@@ -94,6 +75,9 @@ export default function IndexPage({
             </Link>
           </Button>
         </div>
+        <Card className="px-2 py-2 mt-2">
+          <SpentChartSection chartData={Object.values(dataChart || {})} />
+        </Card>
         <Card className="px-2 py-2 mt-3">
           <CardTitle className="text-xl mb-2">Recent Transactions</CardTitle>
           <CardContent className="px-1">
@@ -106,7 +90,7 @@ export default function IndexPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions?.slice(0, -1)?.map((transaction: Transaction) => (
+                {transactions?.map((transaction: Transaction) => (
                   <TableRow key={transaction?.id} className="">
                     <TableCell className="font-medium px-2">
                       {transaction?.date}
@@ -115,25 +99,14 @@ export default function IndexPage({
                       {transaction?.category}
                     </TableCell>
                     <TableCell className="text-right px-2">
-                      {Number(transaction?.amount)?.toLocaleString()} VND
+                      {Number(transaction?.amount)
+                        ?.toLocaleString()
+                        .replaceAll(".", ",")}{" "}
+                      VND
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableCell>{transactions?.slice(-1)?.[0]?.date}</TableCell>
-                  <TableCell>
-                    {transactions?.[transactions?.length - 1]?.category}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {Number(
-                      transactions?.[transactions?.length - 1]?.amount
-                    )?.toLocaleString()}
-                    VND
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
             </Table>
           </CardContent>
         </Card>
@@ -163,13 +136,26 @@ export const getServerSideProps = (async (context) => {
         ? "http://localhost:3000"
         : "https://money-lover-omega.vercel.app";
 
-    const res = await fetch(`${baseURL}/api/google/get-recent-transaction`, {
+    const recentTransaction = await fetch(
+      `${baseURL}/api/google/get-recent-transaction`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: context.req.headers.cookie || "",
+        },
+      }
+    );
+    const dataChartRes = await fetch(`${baseURL}/api/google/get-data-chart`, {
       method: "GET",
       headers: {
         Cookie: context.req.headers.cookie || "",
       },
     });
-    const { summaryAmount, rows: transactions } = await res.json();
+
+    const { dataChart } = await dataChartRes.json();
+
+    const { summaryAmount, rows: transactions } =
+      await recentTransaction.json();
 
     const mappedTransactions: Transaction[] = (transactions || [])
       ?.map((transaction: string[]) => ({
@@ -188,6 +174,7 @@ export const getServerSideProps = (async (context) => {
         note: transaction[mappedDataArray?.note]
           ? transaction[mappedDataArray?.note]
           : "",
+        type: transaction[mappedDataArray?.type],
       }))
       ?.filter(
         (transaction: Transaction) =>
@@ -198,22 +185,12 @@ export const getServerSideProps = (async (context) => {
         const dateB = new Date(b?.date);
         return dateB?.getTime() - dateA?.getTime();
       });
-
-    const addTotalRes: Transaction[] = [
-      ...(mappedTransactions || []),
-      {
-        id: "" + Math.random(),
-        category: "",
-        amount: summaryAmount,
-        date: "Summary",
-        note: "",
-      },
-    ];
     return {
       props: {
         session,
         summaryAmount: Number(summaryAmount),
-        transactions: addTotalRes || [],
+        transactions: mappedTransactions || [],
+        dataChart: dataChart,
       },
     };
   } catch (error) {
@@ -223,6 +200,7 @@ export const getServerSideProps = (async (context) => {
         session,
         summaryAmount: 0,
         transactions: [],
+        dataChart: {},
       },
     };
   }

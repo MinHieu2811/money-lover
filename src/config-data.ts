@@ -37,4 +37,5 @@ export const mappedDataArray = {
   category: 2,
   amount: 3,
   note: 4,
+  type: 5
 }

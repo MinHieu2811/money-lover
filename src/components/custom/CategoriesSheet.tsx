@@ -18,7 +18,7 @@ export const CategoriesSheet = ({
         className="px-0 py-0 w-full h-full overflow-y-scroll"
       >
         <Tabs defaultValue="income" className="w-full relative">
-          <TabsList className={`w-full mt-[50px]`}>
+          <TabsList className={`w-full`}>
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="outcome">Outcome</TabsTrigger>
             <TabsTrigger value="debt">Debt</TabsTrigger>

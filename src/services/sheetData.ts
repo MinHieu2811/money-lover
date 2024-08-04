@@ -1,6 +1,7 @@
 import { getSummaryRowIndex, updateSummaryRow } from "@/utils/sheetUtils";
 import { google } from "googleapis";
 import getConfig from "next/config";
+import { format, parse } from "date-fns";
 
 type Session = {
   accessToken: string;
@@ -9,12 +10,13 @@ type Session = {
 export const fetchSheetData = async (
   spreadsheetId: string
 ): Promise<string[][]> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
   ).toString("utf-8");
-  const credentials = JSON.parse(decodedServiceAccount);
+  const credentials = JSON.parse(decodedServiceAccount) || {};
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: credentials.client_email,
@@ -41,15 +43,15 @@ export const fetchSheetData = async (
 
 export const updateSheetData = async (
   spreadsheetId: string,
-  rows: string[][],
-  session: Session
+  rows: string[][]
 ): Promise<void> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
   ).toString("utf-8");
-  const credentials = JSON.parse(decodedServiceAccount);
+  const credentials = JSON.parse(decodedServiceAccount) || {};
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: credentials.client_email,
@@ -84,12 +86,13 @@ export const insertRowAndAddTransaction = async (
   spreadsheetId: string,
   newRow: string[]
 ): Promise<void> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
   ).toString("utf-8");
-  const credentials = JSON.parse(decodedServiceAccount);
+  const credentials = JSON.parse(decodedServiceAccount) || {};
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: credentials.client_email,
@@ -172,7 +175,8 @@ export const insertRowAndAddTransaction = async (
 };
 
 const getTotalRows = async (spreadsheetId: string): Promise<number> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
@@ -201,7 +205,6 @@ const getTotalRows = async (spreadsheetId: string): Promise<number> => {
 
   const sheet = response.data.sheets?.[0];
 
-  console.log(sheet);
   if (!sheet) {
     throw new Error("Sheet not found");
   }
@@ -210,7 +213,8 @@ const getTotalRows = async (spreadsheetId: string): Promise<number> => {
 };
 
 const getTotalRowsWithData = async (spreadsheetId: string): Promise<number> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
@@ -243,7 +247,8 @@ export const fetchLastNRows = async (
   spreadsheetId: string,
   rowCount: number
 ): Promise<string[][]> => {
-  const base64EncodedServiceAccount = getConfig().serverRuntimeConfig.googleServiceAccount;
+  const base64EncodedServiceAccount =
+    getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
     base64EncodedServiceAccount,
     "base64"
@@ -251,9 +256,9 @@ export const fetchLastNRows = async (
   const credentials = JSON.parse(decodedServiceAccount);
   const auth = new google.auth.GoogleAuth({
     credentials: {
-      client_email: credentials.client_email,
-      client_id: credentials.client_id,
-      private_key: credentials.private_key || "",
+      client_email: credentials?.client_email || "",
+      client_id: credentials?.client_id || "",
+      private_key: credentials?.private_key || "",
     },
     scopes: [
       "https://www.googleapis.com/auth/drive",
@@ -271,25 +276,38 @@ export const fetchLastNRows = async (
     spreadsheetId,
     range: `Sheet1!A${startRow + 1}:Z${totalRows}`,
   });
-  const res = (getResponse.data.values || [])?.some(
-    (item) => item[2] == "Summary"
-  )
-    ? getResponse.data.values || []
-    : [
-        ...(getResponse.data.values || []),
-        [
-          "",
-          "",
-          "Summary",
-          "",
-          "",
-          "",
-          (getResponse.data.values || [])?.reduce((acc, curr) => {
-            acc += Number(curr[3]);
-            return acc;
-          }, 0),
-        ],
-      ];
-  console.log(res);
-  return res || [];
+  return getResponse.data.values || [];
+};
+
+export const groupTransactionsByMonth = async (
+  spreadsheetId: string
+): Promise<{ [month: string]: string[][] }> => {
+  const allRows = await fetchSheetData(spreadsheetId);
+
+  // Assuming the first row is the header and the first column is the date
+  const header = allRows[0];
+  const dateIndex = header.indexOf("Date");
+
+  const transactionsByMonth: { [month: string]: string[][] } = {};
+
+  const filteredAllRows = allRows?.filter(
+    (item) => item[2] != "Summary" && item[1] != "Date"
+  );
+
+  filteredAllRows.forEach((row) => {
+    // Skip header row
+    const date = row[dateIndex];
+    if (!date || date == "Date") return;
+
+    const parsedDate = parse(date, "MM/dd/yyyy", new Date());
+    const monthKey = format(parsedDate, "MMM/yyyy");
+
+    if (!transactionsByMonth?.[monthKey]) {
+      transactionsByMonth[monthKey] = [row]; // Include header in each month's data
+    } else {
+      transactionsByMonth[monthKey].push(row);
+    }
+  });
+
+  return transactionsByMonth;
 };
