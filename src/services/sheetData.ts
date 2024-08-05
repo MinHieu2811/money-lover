@@ -3,10 +3,6 @@ import { google } from "googleapis";
 import getConfig from "next/config";
 import { format, parse } from "date-fns";
 
-type Session = {
-  accessToken: string;
-};
-
 export const fetchSheetData = async (
   spreadsheetId: string
 ): Promise<string[][]> => {

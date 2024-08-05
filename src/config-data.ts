@@ -39,3 +39,9 @@ export const mappedDataArray = {
   note: 4,
   type: 5
 }
+
+export const mappedDataBudget = {
+  id: 0,
+  category: 1,
+  amount: 2
+}
