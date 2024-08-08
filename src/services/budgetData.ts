@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import getConfig from "next/config";
 
-const saveBudgetData = async (spreadsheetId: string, budgetData: string[][]) => {
+const saveBudgetData = async (spreadsheetId: string, budgetData: string[]) => {
   const base64EncodedServiceAccount =
     getConfig().serverRuntimeConfig.googleServiceAccount;
   const decodedServiceAccount = Buffer.from(
@@ -25,15 +25,25 @@ const saveBudgetData = async (spreadsheetId: string, budgetData: string[][]) => 
 
   const sheets = google?.sheets({ version: "v4", auth });
 
-  const sheetName = 'Budget';
-  const range = `${sheetName}!A1`;
-
-  await sheets.spreadsheets.values.update({
+  const budgetsResponse = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range,
+    range: 'Budget!A:D',
+  });
+
+  const budgets = budgetsResponse.data.values || [];
+  const categoryExists = budgets.some(row => row[1] === budgetData[1]);
+
+  if (categoryExists) {
+    throw new Error('A budget with this category already exists');
+  }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: 'Budget!A:D',
     valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
     requestBody: {
-      values: budgetData,
+      values: [budgetData],
     },
   });
 };

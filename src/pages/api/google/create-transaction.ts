@@ -15,10 +15,17 @@ import { authOptions } from "../auth/[...nextauth]";
 import { NextAuthOptions } from "next-auth";
 import { format } from "date-fns";
 import getConfig from "next/config";
+import budgetQueue from "@/lib/bee-queue";
 
 type Session = {
   accessToken: string;
 };
+
+type QueuePayload = {
+  spreadsheetId: string;
+  date: string;
+  category: string;
+}
 
 type TransactionType = "income" | "outcome" | "debt";
 
@@ -103,6 +110,8 @@ export default async function handler(
       note,
       type: transactionType,
     });
+
+    await budgetQueue.createJob<QueuePayload>({ spreadsheetId, date, category }).save();
     res.status(200).json(response);
   } catch (error) {
     console.error("Error adding transaction:", error);
