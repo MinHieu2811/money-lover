@@ -12,46 +12,39 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 import { z } from "zod";
-import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Textarea } from "@/components/ui/textarea";
-import { CategoriesSheet } from "@/components/custom";
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { createBudgetSchema } from "@/zod";
+import { config_data } from "@/config-data";
 
 const inter = Inter({ subsets: ["latin"] });
 
-type Transaction = z.infer<typeof createTransactionSchema>;
+type Budget = z.infer<typeof createBudgetSchema>;
 
-const initialTransation: Transaction = {
+const initialTransation: Budget = {
   amount: "0",
   category: "",
-  note: "",
-  type: "outcome",
-  date: new Date(),
 };
 
 export default function Home() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const form = useForm<Transaction>({
+  const form = useForm<Budget>({
     defaultValues: initialTransation,
-    resolver: zodResolver(createTransactionSchema),
+    resolver: zodResolver(createBudgetSchema),
     mode: "onSubmit",
   });
   const categories = form?.watch("category");
@@ -60,7 +53,7 @@ export default function Home() {
     form?.setValue("category", cate);
   };
 
-  const handleSubmit = async (data: Transaction) => {
+  const handleSubmit = async (data: Budget) => {
     const toastId = toast.loading("Loading...");
     try {
       if (data?.amount === "0") {
@@ -71,9 +64,9 @@ export default function Home() {
         return;
       }
       setLoading(true);
-      await axios.post("/api/google/create-transaction", data);
+      await axios.post("/api/google/budget/create", data);
       form.reset();
-      toast.success("Transaction created successfully", {
+      toast.success("Budget created successfully", {
         id: toastId,
       });
     } catch (error: any) {
@@ -124,50 +117,6 @@ export default function Home() {
                 </FormItem>
               )}
             />
-            <FormField
-              disabled={loading}
-              control={form?.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col mb-3">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          disabled={loading}
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field?.value ? (
-                            format(field?.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field?.value}
-                        onSelect={field?.onChange}
-                        disabled={(date: Date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        className="w-full"
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             {!!categories?.length && (
               <FormField
                 control={form?.control}
@@ -199,21 +148,6 @@ export default function Home() {
                 <span className="ml-2">Choose your Categories</span>
               </Button>
             </SheetTrigger>
-
-            <FormField
-              disabled={loading}
-              control={form?.control}
-              name="note"
-              render={({ field }) => (
-                <FormItem className="mb-3">
-                  <FormLabel>Note</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} placeholder="Note" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <Button
               type="submit"
               className="w-full"
@@ -224,7 +158,28 @@ export default function Home() {
             </Button>
           </form>
         </Form>
-        <CategoriesSheet handleChooseCategory={handleChooseCategories} />
+        {/* <CategoriesSheet handleChooseCategory={handleChooseCategories} /> */}
+        <SheetContent
+          side="right"
+          className="px-0 py-0 w-full h-full overflow-y-scroll"
+        >
+          {config_data?.categories?.["outcome"]?.map((item, index) => (
+            <div
+              className="border-b-1 border-t-2"
+              key={`income-${item}-${index}`}
+            >
+              <SheetClose className="w-full">
+                <Button
+                  className="w-full text-left"
+                  variant="ghost"
+                  onClick={() => handleChooseCategories(item)}
+                >
+                  {item}
+                </Button>
+              </SheetClose>
+            </div>
+          ))}
+        </SheetContent>
       </Sheet>
     </main>
   );

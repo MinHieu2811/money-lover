@@ -2,12 +2,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import {
   fetchSheetData,
   insertRowAndAddTransaction,
-  updateSheetData,
 } from "@/services/sheetData";
 import {
   createNewTransactionRow,
-  getSummaryRowIndex,
-  updateSummaryRow,
 } from "@/utils/sheetUtils";
 import { config_data } from "@/config-data";
 import { getServerSession } from "next-auth/next";
@@ -15,6 +12,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import { NextAuthOptions } from "next-auth";
 import { format } from "date-fns";
 import getConfig from "next/config";
+import { calculateBudget } from "@/services/budgetData";
 
 type Session = {
   accessToken: string;
@@ -103,6 +101,10 @@ export default async function handler(
       note,
       type: transactionType,
     });
+    // await bree.start('calculateBudget');
+
+    await calculateBudget(spreadsheetId, category, date)
+
     res.status(200).json(response);
   } catch (error) {
     console.error("Error adding transaction:", error);

@@ -14,6 +14,7 @@ import {
   HomeIcon,
   LogOutIcon,
   MenuIcon,
+  MenuSquare,
   MoonIcon,
   PlusSquare,
   SunIcon,
@@ -27,6 +28,7 @@ import {
 import { Button } from "../ui/button";
 import { useTheme } from "next-themes";
 import { signOut } from "next-auth/react";
+import { isActiveTab } from "@/utils/isActiveTabs";
 
 type StickyHeaderProps = {
   imgAva?: string;
@@ -35,7 +37,7 @@ type StickyHeaderProps = {
 };
 
 export const StickyHeader = ({ imgAva, name, email }: StickyHeaderProps) => {
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   return (
     <Sheet>
       <div className="sticky-header flex align-items-center justify-between border-b py-3 px-2">
@@ -60,19 +62,37 @@ export const StickyHeader = ({ imgAva, name, email }: StickyHeaderProps) => {
             </div>
           </SheetHeader>
           <div className="relative h-full">
-            <div className="border-b">
+            <div className={`border-b ${isActiveTab(resolvedTheme || 'system', '/')}`}>
               <Link href="/" className="flex items-center py-3 px-2">
                 <HomeIcon width={20} height={20} />
                 <span className="ml-2">Home</span>
               </Link>
             </div>
-            <div className="border-b">
+            <div className={`border-b ${isActiveTab(resolvedTheme || 'system', '/budget/my-budget')}`}>
+              <Link
+                href="/budget/my-budget"
+                className="flex items-center py-3 px-2"
+              >
+                <MenuSquare width={20} height={20} />
+                <span className="ml-2">My budget</span>
+              </Link>
+            </div>
+            <div className={`border-b ${isActiveTab(resolvedTheme || 'system', '/create-transactions')}`}>
               <Link
                 href="/create-transactions"
                 className="flex items-center py-3 px-2"
               >
                 <PlusSquare width={20} height={20} />
                 <span className="ml-2">Create new transactions</span>
+              </Link>
+            </div>
+            <div className={`border-b ${isActiveTab(resolvedTheme || 'system', '/budget/create-budget')}`}>
+              <Link
+                href="/budget/create-budget"
+                className="flex items-center py-3 px-2"
+              >
+                <PlusSquare width={20} height={20} />
+                <span className="ml-2">Create new budget</span>
               </Link>
             </div>
             <SheetFooter className="w-3/4 px-2 py-2 fixed bottom-0">

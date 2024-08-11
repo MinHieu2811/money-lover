@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]";
 import { NextAuthOptions, Session } from "next-auth";
 import { createSheet, getSheets } from "@/services/sheetConfig";
-import { saveBudgetData } from "@/services/budgetData";
+import { checkExistBudget, saveBudgetData } from "@/services/budgetData";
+import getConfig from "next/config";
+import { v4 as uuidv4 } from 'uuid';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = (await getServerSession(
@@ -17,9 +19,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     throw new Error("Unauthorized");
   }
 
-  const { spreadsheetId, budgetData } = req.body;
+  const { amount, category } = req.body;
 
-  if (!spreadsheetId || !budgetData) {
+  const spreadsheetId = getConfig().serverRuntimeConfig.spreadsheetId || '';
+
+  if (!amount || !category) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -33,8 +37,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       await createSheet(spreadsheetId, 'Budget');
     }
 
+    const budgetExist = await checkExistBudget(spreadsheetId, category);
+
+    if (budgetExist) {
+      return res.status(400).json({ error: 'Budget already exists' });
+    }
+
     // Save the budget data
-    await saveBudgetData(spreadsheetId, budgetData);
+    await saveBudgetData(spreadsheetId, [uuidv4(), category, amount, 0]);
 
     res.status(200).json({ message: 'Budget created successfully' });
   } catch (error) {
