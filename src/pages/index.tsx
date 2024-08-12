@@ -6,12 +6,10 @@ import { useSession } from "next-auth/react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardTitle,
 } from "@/components/ui/card";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { EyeIcon, EyeOffIcon, PlusSquare } from "lucide-react";
-import { useState } from "react";
+import { PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { mappedDataArray } from "@/config-data";
 import {
